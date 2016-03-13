@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>用seajs和grunt实现前端模块化</title>
+  <meta name="author" content="JarvanXing" />
+  <link rel="stylesheet" href="index.css" />
+</head>
+<body class="impress-not-supported">
+  <div class="fallback-message">
+    <p>请使用Webkit内核浏览器浏览以下内容，以获得最佳体验 (^^)</p>
+  </div>
+  <div id="impress">
+    <div id="title" class="step" data-x="-1500" data-y="-2200" data-scale="5" data-rotate-x="-40" data-rotate-y="10">
+      <h1>
+        用 <strong class="letter green">seajs</strong>
+        和 <em class="letter">grunt</em>
+        实现
+      </h1>
+      <h1>&nbsp;-&nbsp;前端模块化</h1>
+      <h5 class="letter blue mt40">by&nbsp;&nbsp;JarvanXing</h5>
+    </div>
+
+    <div id="outline" class="step outline" data-x="5000" data-y="-1000" data-rotate="-90" data-scale="2">
+      <h3 class="red bold">大纲</h3>
+      <ul class="f40 mt20">
+        <li><span class="">什么是seajs</span></li>
+        <li><span class="">seajs怎么来的</span></li>
+        <li><span class="">seajs解决了什么问题</span></li>
+        <li><span class="">seajs用法及示例</span></li>
+        <li><span class="">grunt又是什么</span></li>
+        <li><span class="">grunt用法及示例</span></li>
+      </ul>
+    </div>
+
+    <div class="step" data-x="-1000" data-y="-1500" data-rotate-x="20">
+
+      <p class="tcenter">
+        <img src="images/seajs.png" />
+        is
+      </p>
+      <p class="tcenter letter">
+        a <b class="red bold">Module  Loader</b>
+        for the Web
+      </p>
+      <p class="tcenter">
+        <img src="images/seajs.png" />
+        是
+      </p>
+      <p class="tcenter">
+        适用于 Web 端的 <b class="red bold">模块加载</b>
+        器
+      </p>
+
+    </div>
+
+    <div style="width:760px;"  class="step" data-x="0" data-y="-1500" data-rotate-x="40">
+      <div style="position:relative">
+        <h4>其它语言的<span class="bold red">模块</span>机制</h4>
+        <p class="f22 mt20 green">PHP</p>
+        <div class="sbox f22 green">include 'math.php';</div>
+        <p class="f22 mt20 orange">JAVA</p>
+        <div class="sbox f22 orange">import java.io.*;  </div>
+        <p class="f22 mt20 blue">C++</p>
+        <div class="sbox f22 blue">#include "draw.h" </div>
+
+        <p style="position:absolute;bottom:0; left:300px;"><img class="br100" src="images/jm.jpg" /></p>  
+      </div>              
+    </div>
+
+    <div class="step" data-x="850" data-y="3000" data-rotate="90" data-scale="5">
+      <h3 class="tcenter"> <strong class="letter">javascript</strong>的模块呢？
+        -<span class="red">木有</span>
+      </h3>
+    </div>
+
+    <div class="step" data-x="1000" data-y="-1500" data-rotate-x="40">
+        <p class="f32">为了解决<span class="red">命名冲突</span>，我们引入<span class="red">命名空间</span>，看起来像这样：</p>
+        <pre class="f22 mt40">
+
+          var Live = {};
+          Live.bigPortal = {};
+          Live.bigPortal.utils = {};
+          Live.bigPortal.utils.each = function(){
+              ...
+          }
+           ...
+        </pre>
+
+        <p class="f32 mt20">看见长的偶就晕，肿么办？</p>
+    </div>
+    <div class="step" data-x="1000" data-y="-1500" data-scale="2" data-rotate-x="130">
+      <h2><span class="red bold">依赖</span>关系基本靠人肉</h2>
+      <p class="f22"><span class="red bold f32">--</span>我写了一个组件d.js</p>
+      <p class="f22">另外一位同学使用，结果页面报错了！</p>
+      <p class="f22">一检查发现，组件里面有个方法调用另外一个a.js的方法，赶紧在配置文件里面加上a.js，如果是写到页面的话，我还得更改页面的引用</p>
+      <p class="f22"><span class="red bold f32">--</span>某天，我扩充了组件的功能，除了需要 a.js 之外，还需要 b.js</p>
+      <p class="f22">这时候，项目中已经有 N 个地方用到了我的组件……</p>
+      <p class="f22">于是我只好找到每一个调用的地方，要么改配置文件，要么改页面</p>
+      <p class="f22"><span class="red bold f32">--</span>某天，需求砍掉了组件上的一个交互效果</p>
+      <p class="f22">我修改了d.js 的代码，然后发现我不再需要 a.js</p>
+      <p class="f22">于是我再改配置文件或者页面</p>
+      <p class="f22">测试同学告诉我，改完之后，好多个页面报错！</p>
+      <p class="f22">我赶紧检查，发现有些页面出现d_v2.js,而里面用到了a.js,我改回来....</p>
+      <p class="f22"><span class="red bold f32">--</span>一段时间后，测试同学又来找我，说页面又报错了！</p>
+      <p class="f22">再次检查，发现原来是某人动过了b.js,里面引用了a.js，我再改....</p>
+    </div>
+    <div class="step" data-x="0" data-y="-5000" data-scale="4" >
+      <h3><span class="red letter">CommonJS</span> 社区出现 </h3>
+      <p class="f32 mt20">推出Modules/1.0规范</p>
+      <span style="left:90px;" class="icon-down"></span>
+      <p class="f32">Modules/1.x---典型代表是<span class="glass">nodejs</span>和component</p>
+      <p class="f32">Modules/Async---典型代表是<span class="blue">AMD</span>规范及其实现 RequireJS</p>
+      <p class="f32">Modules/wrappings---典型代表<span class="green">CMD</span>规范及其实现seajs</p>       
+    </div>
+    <div class="step" data-x="0" data-y="-2000" data-scale="4">
+        <h2><span class="red bold">Modules/1.x</span>(CommonJS)</h2>
+        <pre class="f22 mt40">
+          // File:math.js
+          <span class="red">exports</span>.distance = function(sx, sy, ex, ey) {
+            var dx = ex - sx;
+            var dy = ey - sy;
+            return Math.sqrt(dx * dx + dy * dy);
+          };
+          // File: program.js
+          var distance = <span class="orange">require</span>('math').distance;
+          distance(0,0,300,400); // 500                
+          </pre>
+    </div>
+    <div class="step" data-x="0" data-y="-1000" data-scale="1">
+        <h2><span class="red bold">AMD</span></h2>
+        <pre class="f22 mt40">
+          // File:util.js
+          <span class="red">define</span>(['math'],function(math){
+            return {
+              distance:function(sx, sy, ex, ey) {
+                return math.distance(sx, sy, ex, ey)*1000;
+              };
+            }
+          });
+          // File: program.js
+          var distance = <span class="orange">require</span>('util').distance;
+          distance(0,0,300,400); // 500                
+          </pre>
+    </div>
+
+
+    <div class="step" data-x="0" data-y="-1000" data-z="-1000" data-scale="1" data-rotate="180" >
+
+      <h2 class="red bold">CMD</h2>
+      <pre class="f22 mt40">
+            //所有模块都通过define定义
+            <span class="red">deﬁne</span>(function(require, exports, module) {
+                //通过require引入依赖
+                var $ = <span class="green">require</span>(‘jquery’);
+                var math = <span class="green">require</span>(‘./math’);
+                通过exports对外提供接口
+                <span class="orange">exports</span>.doSomething = ...
+                //或者通过module.exports提供整个接口
+                <span class="orange">module.exports</span>= ...
+            })        
+       </pre>
+
+    </div>
+
+    <div class="step" data-x="1000" data-y="0" data-z="-2000" data-rotate="0" data-rotate-y="90" data-scale="0.5" style="width:380px;">
+      <h4 class="red">就这样<img src="images/seajs.png" /></h4>
+      <p class=" mt20"><img class="br200" width="380" src="images/chick.jpg" /></p>
+    </div>
+
+
+
+    <div class="step" data-x="1000" data-y="1000" data-scale="1" >
+      <h3 class="bold red">一个模块一个文件</h3>
+      <p style="top:-50px;" class="sbox f32">a_very_big_file.js</p>
+      <span style="top:0px; left:10px;" class="icon-right"></span>
+      <p style="top:50px;" class="sbox f32">
+        module_a.js
+        <br/>
+        module_b.js
+        <br/>
+        module_c.js
+        <br/>
+        module_d.js
+        <br/>
+        ...
+      </p>
+    </div>
+
+    <div class="step tc" data-x="1000" data-y="2000" data-scale="1" >
+      <h3 class="bold red">高性能：异步  +   并行</h3>
+      <div style="padding-top:80px;">
+        <img src="images/xn1.png" width="300" />
+        <span class="icon-right"></span>
+        <img width="200"  src="images/xn2.png" />
+      </div>
+    </div>
+
+    <div  class="step" data-x="2825" data-y="6325" data-z="-3000" data-rotate="300" data-scale="6">
+      <h3 class="bold red">使用简单</h3>
+      <p class="f32">---自动管理依赖    +   约定优于配置</p>
+      <p class="sbox mt20 f32">
+        // in module_a.js:
+        <br/>
+        <strong class="green">require</strong>
+        (‘path/to/module_x’);
+        <br/>
+        // in html page:
+        <br/>
+        seajs. <em class="orange">use</em>
+        (‘path/to/main’);
+        <br/>
+        // in deployment:
+        <br/>
+        $ grunt <span class="red">build</span>
+        <br/>
+        or $ spm <span class="red">build</span> main.js --combine
+      </p>
+    </div>
+
+
+    <div class="step" data-x="3825" data-y="2325" data-z="-3000" data-rotate="0" data-scale="5">
+      <h3 class="bold red">可维护性</h3>
+      <p class="f32">---无命名空间冲突    +   多版本共存</p>
+      <div class="mt20" style="display:inline-block;width:340px;">
+        <p class="sbox f22">
+          var book = Live.T.Book;
+          <br/>
+          var desc = Live.B.Desc;
+        </p>
+        <span style="left:60px;" class="icon-down"></span>
+        <p class="sbox f22">
+          // in module_x.js:
+          <br/>
+          var book = require('Book');
+          <br/>
+          var desc = require('Desc');
+        </p>
+      </div>
+      <div class="mt20" style="display:inline-block; width:520px;">
+        <p class="sbox f22">
+          &lt;script src=”jquery-1.2.6.js”&gt;
+          <br/>
+          &lt;script src=”jquery-1.7.1.js”&gt;
+          <br/>
+          &lt;script&gt;
+          <br/>
+          var jq17 = $.noConflict(true);
+          <br/>
+          &lt;/script&gt;
+        </p>
+        <span style="left:120px;" class="icon-down"></span>
+        <p class="sbox f22">
+          // in module_x.js:
+          <br/>
+          var jq12 = require(‘jquery/1.2.6/jquery’);
+          <br/>
+          var jq17 = require(‘jquery/1.7.1/jquery’);
+        </p>
+      </div>
+    </div>
+
+    <div class="step" data-x="5000" data-y="2325" data-z="-3000" data-rotate="0" data-scale="1">
+      <h3 class="bold red">跨环境</h3>
+      <p class="f32">---通用模块只需编写一次</p>
+      <p class="sbox code f22" style="top:20px;">
+        // in <span class="red">html</span> page:
+        <br/>
+        seajs.<span class="orange">use</span>('./init.js');
+        <br/>
+        // in init.js:
+        <br/>
+        var QS = <span class="green">require</span>(‘querystring’);
+      </p>
+      <p class="sbox code f22" style="top:20px;">
+        // in <span class="red">node</span> environment:
+        <br/>
+        $ node init.js
+        <br/>
+        // in init.js:
+        <br/>
+        <span class="green">require</span>(‘seajs’);
+        <br/>
+        var QS = <span class="green">require</span>(‘querystring’);
+      </p>
+    </div>
+    <div class="step" data-x="6000" data-y="2325" data-z="-3000" data-rotate="0" data-scale="1">
+      <h3 class="bold red">已有哪些公司在用？</h3>
+      <p class="mt40"><img src="images/who.png" /></p>
+    </div>
+
+    <div class="step"  data-x="4500" data-y="4000" data-rotate="0" data-scale="0.5" >
+      <h2 class="red bold tcenter">基本用法</h2>
+    </div>
+
+    <div class="step"  data-x="5000" data-y="4000" data-rotate="0" data-scale="0.5" >
+      <p class="f32 mt20">
+        使用 <strong class="red">exports</strong> 对外提供接口
+        <br/>
+        使用<strong class="orange">use</strong>的回调函数获取加载的模块对象
+      </p>
+      <pre class="sbox letter f22">
+        init.js:
+        define(function(require, exports) {
+          <strong class="red">exports</strong>.message = ‘Hello, world!’;
+        });
+        </pre>
+      <pre class="sbox letter f22">
+        test.html:
+        &lt;script src="libs/seajs/2.1.1/sea.js"/&gt;
+        &lt;script&gt;
+          seajs.<strong class="orange">use</strong>(‘./init’,function(init){
+                alert(init.message);
+          });
+        &lt;/script&gt;         
+        </pre>      
+
+    </div>
+
+    <div class="step"  data-x="5500" data-y="4000" data-rotate="0" data-scale="0.5" >
+      <p class="f32">
+        使用 <span class="red bold">require</span>获取其他模块对象,自动处理依赖  
+      </p>
+      <p class="f26">---关注点分离：直接依赖的模块    +   向外提供的接口</p>
+      <pre class="sbox f18 mt40">
+        //city.js:<br/>
+        <strong class="red bold">define</strong>(function(require, exports) {
+          var io = <strong class="red bold">require</strong>(‘./io’);
+          ...
+          <strong class="green bold">exports</strong>.getSum = function(city) { ... };
+        });       
+      </pre>      
+      <pre class="sbox f18 mt40">
+        //init.js:<br/>
+        <strong class="red bold">define</strong>(function(require, exports) {
+          var city = <strong class="red bold">require</strong>(‘./weather’);
+          var sum = city.getSum('shenzhen');
+          <strong class="green bold">exports</strong>.sum = sum;
+        });
+        </pre>
+
+    </div>
+
+    <div class="step"  data-x="6000" data-y="4000" data-rotate="0" data-scale="0.5" >
+      <p class="f40 bold red">延迟异步加载</p>
+      <pre class="f26 mt40">
+        define(function(require, exports, module) {
+          var a = require(‘./a’);
+          require.<strong class="red">async</strong>(‘./b’, function(b) {
+            ...
+          });
+          exports.x = ... ;
+        });    
+      </pre>      
+
+        
+    </div>
+
+    <div class="step"  data-x="-2000" data-y="4500" data-rotate="180" data-scale="1" >
+
+      <p class="f50 bold red">转换--transport</p>
+
+      <pre class="sbox f18 mt40">
+      <span class="blue">//普通模块</span><br/>
+      (function() {
+        if (typeof ABC === ‘undefined’) {
+          ABC = {};
+        }
+        ABC.doSth = function() { ... };
+        ABC.someMember = ...;
+      })();
+      </pre>
+      <pre class="sbox f18 mt40">
+      <span class="green">//CMD模块</span><br/>
+      define(function(require, exports) {
+        var ABC = exports;
+        ABC.doSth = function() { ... };
+        ABC.someMember = ...;
+      });               
+      </pre>
+
+    </div>
+
+    <div class="step" data-x="4000" data-y="-5000" data-rotate="0" data-scale="14" >
+      <h3 class="bold red">多版本共存</h3>
+      <p class="f32">---SeaJS的模块，理想情况下，不再有全局变量。</p>
+      <p class="f22 blue bold p10">old_module.js:</p>
+      <pre class="sbox f22 ">
+      define(function(require, exports) {
+        var $ = require(‘jquery/1.7.1/jquery’);
+        ...
+      });           
+      </pre>
+      <p class="f22 green bold p10">new_module.js:</p>
+      <pre class="sbox f22 ">
+      define(function(require, exports) {
+        var $ = require(‘jquery/1.9.1/jquery’);
+        ...
+      });
+      </pre>      
+<!--       <h1 class="tcenter">参数说明</h1> -->
+    </div>
+
+
+    <div class="step" data-x="6400" data-y="-5000" data-rotate="0" data-scale="1" >
+      <h1 class="bold red letter">API</h1>
+      <ul>
+         <li>define--模块定义函数</li>
+         <li>require--加载模块</li>
+         <li>exports--对外提供模块接口</li>
+         <li>module--对外提供整个接口</li>
+         <li>seajs.use--用来在页面中加载模块</li>
+         <li>seajs.config--配置</li>
+      </ul>
+
+    </div>
+
+    <div class="step"  data-x="7000" data-y="-5000" data-rotate="0" data-scale="1" >
+      <h3 class="bold red">seajs.config(options) 配置</h3>
+      <pre class="f18">
+       seajs.config({
+        // 别名配置
+        alias: {
+          'jquery': 'jquery/1.10.1/jquery'
+        },
+        // 路径配置
+        paths: {
+          'gallery': 'http://localhost/gallery'
+        },
+        // 变量配置
+        vars: {
+          'locale': 'zh-cn'
+        },
+        // 映射配置
+        map: [
+          ['http://example.com/js/app/', 'http://localhost/js/app/']
+        ],
+        // 预加载项
+        preload: [
+          this.JSON ? '' : 'json'
+        ]
+      });         
+        </pre>
+    </div>
+
+    <div class="step" data-x="7500" data-y="-5000" data-rotate="0" data-scale="1" >
+      <h4 class="bold red">SeaJS 加载过程</h4>
+      <pre class="f18 mt20">
+      /*  a.js  */
+      deﬁne(function(require, exports,  module) {
+        var b = require(‘./b’)
+        var c = require(‘./c’)
+        //  ...
+      })  
+      /* main.js */
+      seajs.use(‘./a’)             
+      </pre>
+      <p class="f18 mt20">
+        Step 1： 解析  ‘./a’
+        <br/>
+        Step  2.1: 下载    a
+        <br/>
+        Step  2.2: 执行  deﬁne，保存  a 的 factory
+        <br/>
+        Step  2.3: 得到依赖  b 和 c
+        <br/>
+        Step  2.4: 加载  b 和 c
+        <br/>
+        Step  3: 执行  a 的 factory，得到  a 的 module.exports
+        <br/>
+      </p>
+    </div>
+
+    <div class="step" data-x="8000" data-y="-5000" data-rotate="0" data-scale="1" >
+      <h3 class="bold red">SeaJS 路径解析</h3>
+      <p class="mt20"><img src="images/url.png" /></p>
+    </div>
+
+    <div class="step"  data-x="8500" data-y="-5000" data-rotate="0" data-scale="1" >
+             <h2 class="bold red tcenter">SeaJS 例子</h2>
+
+    </div>
+
+    <div class="step"  data-x="9000" data-y="-5000" data-rotate="0" data-scale="1" >
+         <p class="tcenter">
+        <img src="images/grunt.png" />
+      </p>
+    </div>
+<!-- 
+    <div class="step" data-x="10000" data-y="-5000" data-rotate="0" data-scale="1" >
+
+    </div>
+
+    <div class="step" data-x="10000" data-y="-4000" data-rotate="90" data-scale="1" >
+
+    </div>
+
+    <div class="step" data-x="10000" data-y="-3000" data-rotate="90" data-scale="1" >
+
+    </div>
+
+    <div class="step" style="text-align: center; font-size:30px" data-x="10000" data-y="-2000" data-rotate="90" data-scale="1" >
+
+    </div>
+
+    <div class="step" data-x="10000" data-y="0" data-rotate="90" data-scale="1" >
+
+    </div>
+    
+    <div class="step" data-x="10000" data-y="3000" data-rotate="90" data-scale="1" >
+
+    </div> -->
+
+    <div class="step f32" data-x="10000" data-y="4000" data-rotate="90" data-scale="1" >
+      
+      <p class="red f40 bold">Q：Grunt为何物？</p>
+      <P class=" f26 p10">A：一个专为JavaScript提供的构建工具。</P>
+      <P class="red f40 bold">Q：啥是构建工具？</P>
+
+       <P class="p10 f26">A：在项目部署上线前，通常要将源文件压缩，合并。<br/>
+        在将js模块化后，又多了一个分析，提取业务代码中所依赖模块的工作。
+      <br/>
+      解决这一系列繁重工作的自动化工具，称之为构建工具。</P>
+       <p class="red f40 bold">Q：grunt是如何工作的？</p>
+       <p class="f26 p10">A：就好像一个万能工厂（grunt），只负责执行任务（Task），不关心每个任务到底都干了什么。</p>
+    </div>
+
+    <div class="step"  data-x="10000" data-y="5000" data-rotate="90" data-scale="1" >
+      <h3 class="bold red">安装grunt CLI</h3>
+      <p class="f32 mt20">前提是已经安装了nodejs和npm。</p>
+      <p class="sbox f32 mt20">npm install -g grunt-cli</p>
+    </div>
+
+    <div class="step" data-x="10000" data-y="6000" data-rotate="90" data-scale="1" >
+      <h3 class="bold red tcenter">在项目中使用grunt</h3>
+      <p class="f22">
+        首先需要往项目里添加两个文件：package.json和Gruntfile.js
+        <br/>
+        package.json:该文件用来为npm存放项目配置的元数据，与grunt关系最大的配置在devDependencies中。
+      </p>
+      <pre class="f18">
+          //package.json
+        {
+          "name": "webapp",
+          "version": "0.0.1",
+          "devDependencies": {
+            "grunt": "~0.4.1",
+            "grunt-cmd-transport": "~0.2.9",
+            "grunt-cmd-concat": "~0.2.4",
+            "grunt-contrib-uglify": "~0.2.0",
+            "grunt-contrib-clean": "~0.4.0"
+          }
+        }          
+        </pre>
+      <p class="f18">Gruntfile.js:注意G的大写，这个文件就是grunt的配置了，其中详细定义了每个任务的细节和执行任务的顺序等。</p>
+    </div>
+
+    <div class="step" data-x="10000" data-y="7000" data-rotate="90" data-scale="1" >
+      <h3 class="bold red tcenter">安装grunt</h3>
+      <p class="f22">
+        在命令行进入项目所在目录，键入如下命令即可，npm会根据devDependencies中的配置，将需要的grunt及其插件下载到你的项目目录中。
+      </p>
+      <p class="sbox">npm install</p>
+    </div>
+    <div class="step" data-x="5000" data-y="5000" data-rotate="180" data-scale="1" >
+      <h1 class="bold red tcenter">综合应用</h1>
+    </div>
+
+    <div class="step" data-x="2000" data-y="1000" data-scale="20">
+      <h1 class="p20 tcenter letter orange">Thanks</h1>
+    </div>
+
+    <!--     <div id="overview" class="step" data-x="2000" data-y="1000" data-scale="20" style="font-family: 'PT Serif', georgia, serif;color:#ff4a00;">Thanks</div>
+  -->
+</div>
+
+<script src="impress.js"></script>
+<script>impress().init();</script>
+</body>
+</html>
