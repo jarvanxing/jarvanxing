@@ -64,7 +64,7 @@
 						<li><h3>webpack</h3></li>
 						<li class="fragment"><h3>es6 + babel</h3></li>
 <!-- 						<li class="fragment"><h3>web component + spa</h3></li> -->
-						<li class="fragment"><h3>react + flux</h3></li>
+						<li class="fragment"><h3>react</h3></li>
 						<li class="fragment"><h3>eslint + airbnb</h3></li>
 
 						<li class="fragment"><h3>karma + mocha + chai</h3></li>
@@ -90,6 +90,7 @@
 						<li>各种loader预处理/编译</li>
 						<li>按需加载(code split)</li>
 						<li>热更新(webpack-hot-middleware)</li>
+						<li>hash</li>
 					</ol>
 				</section>
 
@@ -122,7 +123,7 @@
 						<li>极高的代码可读性和可维护性</li>
 						<li>spa(react-router)</li>
 						<li>Isomorphic JavaScript</li>
-						<li>flux单向数据流(redux)</li>
+						<li>flux单向数据流</li>
 						<li>繁荣的社区环境</li>
 					</ol>
 					</section>
@@ -184,11 +185,20 @@ export default class WaterfallBase extends React.Component {
 					</code></pre>
 
 				</section>
+				<section>
+					<img  data-src="./doublebind.jpg"/>
+					<img  data-src="./flux.jpg"/>
+				</section>
+				<section>
+					<h4>flux流程图</h4>
+					<img  data-src="./flux2.png"/>
+				</section>
 					<section>
 					<h3>实战经验</h3>
 					<ol class="navigate-down">
 						<li>在shouldComponentUpdate中优化组件减少reRender</li>
 						<li>propTypes, defaultProps不要懒的去写，别人通过你的propTypes很容易理解组件，也容易debug</li>
+						<li>immutable.js 一定要注意数据的变异</li>
 						<li>组件间的数据通信(eventmitter, context, flux)</li>
 						<li>无状态组件</li>
 						<li>带widnow/dom的操作抽离出来, 方便同构</li>
